@@ -1,6 +1,3 @@
-#ifndef TEST_CTEST_HPP
-#define TEST_CTEST_HPP
-
 #include <string>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
@@ -47,5 +44,3 @@ EMSCRIPTEN_BINDINGS(my_module)
 #ifdef __cplusplus
 }
 #endif
-
-#endif //TEST_CTEST_HPP
