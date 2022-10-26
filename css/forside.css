@@ -8,24 +8,10 @@ body {
     background-color: #bababa;
 }
 
-#submit-text {
-    position: fixed;
-    left: 50vh;
-    top: 30vh;
-    padding: 10px;
-}
-
 #manipulate-text-list {
         position: fixed;
         top: 10vh;
-}
-
-#output-text {
-    position: fixed;
-    top: 50vh;
-    left: 20vh;
-    background-color: #252626;
-    color: aliceblue;
+        left: 150vh;
 }
 
 footer {
