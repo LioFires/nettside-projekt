@@ -1,7 +1,8 @@
 const input_felt = document.getElementById("text-input");
 const check_box_list = document.getElementById("manipulate-text-list");
 
-input_felt.addEventListener("keydown", function(event) {
+input_felt.addEventListener("keydown", (event) => 
+{
         if (event.key === "Enter")
         {
             document.getElementById("output-text").innerHTML = input_felt.value;
@@ -9,7 +10,7 @@ input_felt.addEventListener("keydown", function(event) {
 });
 
 /*
-
+    The when_input_changes function is gonnna be moved to the C++ file.
 */
 function when_input_changes()
 {
@@ -32,7 +33,7 @@ function when_input_changes()
                 break;
     
                 case "color-text-checked":
-    
+
                 break;
     
                 case "download-text-checked":
@@ -42,6 +43,7 @@ function when_input_changes()
                 case "copy-text-checked":
     
                 break;
+            
             }
         }
     }
