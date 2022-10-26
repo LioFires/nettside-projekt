@@ -1,85 +1,88 @@
 /* styling the menu: */
 
-body, #mainmenu, #contents {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+@font-face
+{
+    font-family: Diet-Again;
+    src: url("../custom-fonts/Diet Again.otf");
+    src: url("../custom-fonts/Diet Again.ttf");
 }
 
-#mainmenu {
-    position: relative;
-    background-color: #fff;
-    padding: 20px;
-    transition: 0.5s;
-    border-radius: 50px;
-    box-shadow: none;
-    overflow: hidden;
-    font-family: 'Open Sans', Verdana, Geneva, Tahoma, sans-serif;
+@font-face {
+    font-family: Main-Regular;
+    src: url("../custom-fonts/Main-Regular.ttf");
 }
 
-#contents {
-    margin: 0;
-    padding: 0;
-    width: 0;
-    overflow: hidden;
-    transition: 0.5s;
+#mainmenu-space h1, #mainmenu-space p 
+{
+    font-family: Main-Regular;
 }
 
-#mainmenu input:checked ~ #contents {
-    width: 450px;
+#mainmenu-space p 
+{
+    font-size: 14px;
+    border-bottom: 1px solid #000;
 }
 
-#contents li {
-    list-style: none;
-    margin: 0 10px;
+#mainmenu-space h1
+{
+    font-size: 35px;
 }
 
-#contents li a {
-    text-decoration: none;
-    color: #666;
-    text-transform: uppercase;
-    font-weight: 600;
-    transition: 0.5s;
-}
-
-#contents li a:hover{
-    color: #161919;
-}
-
-#mainmenu input {
-    width: 40px;
-    height: 40px;
+#logo-text 
+{
     cursor: pointer;
-    opacity: 0;
 }
 
-#mainmenu span {
-    position: absolute;
-    left: 30px;
-    width: 30px;
-    height: 4px;
+#mainmenu-space
+{
+    background-color: ghostwhite;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 10%;
+}
+
+#mainmenu-links
+{
+    list-style: none;
+}
+
+#mainmenu-links li, mainmenu-links a, #need-help-button
+{
+    font-family: Diet-Again, sans-serif;
+    font-weight: 600;
+    color: ghostwhite;
+    text-decoration: none;
+}
+
+#mainmenu-links li
+{
+    display: inline-block;
+    padding: 0px 20px;
+}
+
+#mainmenu-links li a
+{
+    color: #000;
+    transition: all 0.3s ease 0s;
+}
+
+#mainmenu-links li a:hover
+{
+    color: gray;
+}
+
+#need-help-button
+{
+    padding: 6px 15px;
+    background-color: rgb(0, 0, 0, 1);
+    border: none;
     border-radius: 50px;
-    background-color: #666;
-    pointer-events: none;
-    transition: 0.5s;
+    cursor: pointer;
+    transition: all 0.3s ease 0s;
 }
 
-#mainmenu input:checked ~ span {
-    background-color: #f974a1;
-}
-
-#mainmenu span:nth-child(2) {
-    transform: translateY(-8px);
-}
-
-#mainmenu input:checked ~ span:nth-child(2) {
-    transform: translateY(0) rotate(-45deg);
-}
-
-#mainmenu span:nth-child(3) {
-    transform: translateY(8px);
-}
-
-#mainmenu input:checked ~ span:nth-child(3) {
-    transform: translateY(0) rotate(45deg);
+#need-help-button:hover
+{
+    background-color: rgba(0, 0, 0, 0.7);
 }
