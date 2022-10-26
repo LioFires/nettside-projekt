@@ -8,9 +8,6 @@ input_felt.addEventListener("keydown", function(event) {
         }
 });
 
-//console.log(check_box_list.children[0].firstChild.checked)
-
-
 /*
 
 */
@@ -29,10 +26,6 @@ function when_input_changes()
                 break;
     
                 case "uppercase-text-checked":
-                    str = Module.lower_or_uppercase_string(input_felt.value);
-                    input_felt.value = str;
-                break;
-    
                 case "lowercase-text-checked":
                     str = Module.lower_or_uppercase_string(input_felt.value);
                     input_felt.value = str;
