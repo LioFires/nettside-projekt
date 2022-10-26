@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake Company</title>
+    <link rel="shortcut icon" href="../images/icon.png" type="image/png">
+    <link rel="stylesheet" href="../css/forside.css">
+</head>
+<body>
+    <div  onclick="this.style.color = 'red;'"; style="position: fixed; left: 0px; top: 0px;" include-html="mainmenu.html" id="menubar-space"></div>
+
+    <div id="main-box">
+        <h1>Online Text Editing</h1>
+        <p>Only necessary features implemented.</p>
+    </div>
+
+    <textarea name="input" oninput="when_input_changes()" id="text-input" cols="50" rows="25"></textarea>
+    <ul id="manipulate-text-list">
+        <li><input type="checkbox" name="" id="reverse-text-checked">Reversed</li>
+        <li><input type="checkbox" name="" id="uppercase-text-checked">Make UPPERCASE</li>
+        <li><input type="checkbox" name="" id="lowercase-text-checked">Make lowercase</li>
+        <li><input type="checkbox" name="" id="color-text-checked">Color text</li>
+        <li><input type="checkbox" name="" id="download-text-checked">Download</li>
+        <li><input type="checkbox" name="" id="copy-text-checked">Copy text</li>
+    </ul>
+    <button type="submit" id="submit-text" onclick="send()">Run</button>
+    <p id="output-text"></p>
+    <footer><p style="white-space: nowrap;">Created by Lio / Lionel in 2022.</p></footer>
+</body>
+<script src="../compiledJS/main.js" async></script>
+<script src="../js/include-html.js"></script>
+<script src="../js/forside.js"></script>
+</html>
