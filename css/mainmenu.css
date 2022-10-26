@@ -3,13 +3,13 @@
 @font-face
 {
     font-family: Diet-Again;
-    src: url("../custom-fonts/Diet Again.otf");
-    src: url("../custom-fonts/Diet Again.ttf");
+    src: url("../.custom-fonts/Diet Again.otf");
+    src: url("../.custom-fonts/Diet Again.ttf");
 }
 
 @font-face {
     font-family: Main-Regular;
-    src: url("../custom-fonts/Main-Regular.ttf");
+    src: url("../.custom-fonts/Main-Regular.ttf");
 }
 
 #mainmenu-space h1, #mainmenu-space p 

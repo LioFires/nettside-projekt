@@ -1,8 +1,8 @@
 @font-face 
 {
     font-family: Kepolu;
-    src: url("../custom-fonts/Kepolu.otf");
-    src: url("../custom-fonts/Kepolu.ttf");
+    src: url("../.custom-fonts/Kepolu.otf");
+    src: url("../.custom-fonts/Kepolu.ttf");
 }
 
 * 
@@ -52,5 +52,6 @@ footer
     position: fixed;
     top: 30vh;
     left: 7vh;
-    background-color: ghostwhite
+    background-color: ghostwhite;
+    resize: none;
 }
