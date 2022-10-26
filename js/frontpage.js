@@ -49,9 +49,3 @@ function when_input_changes()
         }
     }
 }
-
-
-function send()
-{
-    document.getElementById("output-text").innerHTML = input_felt.value;
-}

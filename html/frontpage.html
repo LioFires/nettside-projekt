@@ -10,24 +10,20 @@
 </head>
 <body>
 
-    <!-- Menu bar -->
+    <!-- Menubar -->
     <header include-html="mainmenu.html" id="mainmenu-space"></header>
 
     <!-- Input field -->
-    <textarea name="input" oninput="when_input_changes()" id="text-input" cols="50" rows="25"></textarea>
-    
-    <ul id="manipulate-text-list">
-        <li><input type="checkbox" name="" id="reverse-text-checked">Reversed</li>
-        <li><input type="checkbox" name="" id="uppercase-text-checked">Make UPPERCASE</li>
-        <li><input type="checkbox" name="" id="lowercase-text-checked">Make lowercase</li>
-        <li><input type="checkbox" name="" id="color-text-checked">Color text</li>
-        <li><input type="checkbox" name="" id="download-text-checked">Download</li>
-        <li><input type="checkbox" name="" id="copy-text-checked">Copy text</li>
-    </ul>
+    <textarea name="input" oninput="when_input_changes()" id="text-input" cols="80" rows="25"></textarea>
 
-    <footer><p style="white-space: nowrap;">Created by Lio / Lionel in 2022.</p></footer>
+    <!-- Footer -->
+    <footer>
+        <p style="white-space: nowrap;">Created by LioFires.</p>
+        <!-- Dark theme / White theme button-->
+        <button type="button" id="change-theme-button">🌗</button>
+    </footer>
 </body>
 <script src="../compiledJS/main.js" async></script>
 <script src="../js/include-html.js"></script>
-<script src="../js/forside.js"></script>
+<script src="../js/frontpage.js"></script>
 </html>
