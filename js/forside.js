@@ -11,6 +11,7 @@ input_felt.addEventListener("keydown", (event) =>
 
 /*
     The when_input_changes function is gonnna be moved to the C++ file.
+    and be redone completly.
 */
 function when_input_changes()
 {
