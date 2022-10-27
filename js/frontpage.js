@@ -7,3 +7,6 @@ const change_theme_emoji = () => change_theme_button.innerText = (change_theme_b
     The when_input_changes function is gonnna be moved to the C++ file.
     and be redone completly.
 */
+
+// add this: AddType application/wasm wasm 
+// to the .htaccess file when you finally need to host the website on 000webhost.com
