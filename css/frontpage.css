@@ -12,9 +12,13 @@
     padding: 0;
 }
 
+/*
+    I was very worried my page wouldn't be responsive on smaller screens and yea it isn't yet.
+*/
 body 
 {
     background-color: #bababa;
+    min-width: min-content;
 }
 
 #manipulate-text-list 
@@ -47,11 +51,29 @@ footer
     transition: all 0.3s ease 0s;
 }
 
-#text-input 
+#input-felt
 {
     position: fixed;
-    top: 30vh;
+    top: 20vh;
     left: 7vh;
     background-color: ghostwhite;
     resize: none;
+    border: none;
+    overflow: auto;
+    outline: none;
+
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+}
+
+#input-felt-menubar
+{
+    background-color: #c9c7c7;
+    position: fixed;
+    left:57px;
+    top: 20vh;
+    width: 71vh;
+    height: 5vh;
+    z-index: 1;
 }
