@@ -21,13 +21,6 @@ body
     min-width: min-content;
 }
 
-#manipulate-text-list 
-{
-        position: fixed;
-        top: 10vh;
-        left: 150vh;
-}
-
 footer 
 {
     position: absolute;
@@ -53,7 +46,7 @@ footer
 
 #input-felt
 {
-    position: fixed;
+    position: relative;
     top: 20vh;
     left: 7vh;
     background-color: ghostwhite;
@@ -61,19 +54,15 @@ footer
     border: none;
     overflow: auto;
     outline: none;
-
-    -webkit-box-shadow: none;
-    -moz-box-shadow: none;
     box-shadow: none;
 }
 
 #input-felt-menubar
 {
     background-color: #c9c7c7;
-    position: fixed;
+    position: relative;
     left:57px;
     top: 20vh;
     width: 71vh;
     height: 5vh;
-    z-index: 1;
 }

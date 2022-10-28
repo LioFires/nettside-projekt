@@ -7,24 +7,20 @@
 #include <emscripten/emscripten.h>
 #include <algorithm>
 
-#ifdef __cplusplus
-    extern "C" {
-#endif
-
 using namespace emscripten;
-
-// emcc -lembind ./Cpp/main.cpp -o ./compiledJS/main.js
 
 class String_Modifier
 {
     public:
         String_Modifier() = default;
-        ~String_Modifier();
+        ~String_Modifier() = default;
 
         void when_input_changes();
+        void change_theme_emoji();
+        size_t _get_sizeof() const { return _class_size; }
+    
+    private:
+        const size_t _class_size { sizeof(String_Modifier) };
 };
-
-#ifdef __cplusplus
-}
 
 #endif // WEBSITE_STR_MOD_HPP

@@ -9,25 +9,26 @@
     <link rel="stylesheet" href="../css/mainmenu.css">
     <link rel="icon" href="../images/icon.png">
 </head>
-<body>
+<body onbeforeunload="String_Modifier_OBJ.delete();">
     <!-- Menubar -->
     <header include-html="mainmenu.html" id="mainmenu-space"></header>
-
-     <!-- Input felt menu -->
-     <div id="input-felt-menubar">
-     </div>
-
+    
+    <!-- Input felt menu -->
+    <div id="input-felt-menubar"></div>
+        
     <!-- Input field -->
     <textarea name="input" id="input-felt" cols="80" rows="25"></textarea>
 
     <!-- Footer -->
     <footer>
          <!-- Dark theme / White theme button and made by me text-->
-        <p style="white-space: nowrap;"><button type="button" onmouseover="change_theme_emoji()" onmouseout="change_theme_emoji()" id="change-theme-button">
-            🌕</button><br>Created by LioFires.</p>
+        <p style="white-space: nowrap;"><button type="button" 
+            onmouseover="String_Modifier_OBJ.change_theme_emoji()" 
+            onmouseout="String_Modifier_OBJ.change_theme_emoji()" 
+            id="change-theme-button">🌕</button><br>Created by LioFires.</p>
     </footer>
-<script src="../compiledJS/main.js" async></script>
-<script src="../js/include-html.js"></script>
 <script src="../js/frontpage.js"></script>
+<script src="../compiledJS/String_Modifier_CLASS.js" async></script>
+<script src="../js/include-html.js"></script>
 </body>
 </html>
