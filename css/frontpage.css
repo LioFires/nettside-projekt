@@ -12,9 +12,6 @@
     padding: 0;
 }
 
-/*
-    I was very worried my page wouldn't be responsive on smaller screens and yea it isn't yet.
-*/
 body 
 {
     background-color: #bababa;
@@ -44,25 +41,6 @@ footer
     transition: all 0.3s ease 0s;
 }
 
-#input-felt
-{
-    position: relative;
-    top: 20vh;
-    left: 7vh;
-    background-color: ghostwhite;
-    resize: none;
-    border: none;
-    overflow: auto;
-    outline: none;
-    box-shadow: none;
-}
-
-#input-felt-menubar
-{
-    background-color: #c9c7c7;
-    position: relative;
-    left:57px;
-    top: 20vh;
-    width: 71vh;
-    height: 5vh;
+img {
+    display: block;
 }

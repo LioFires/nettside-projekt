@@ -3008,6 +3008,17 @@ var ASM_CONSTS = {
       });
     }
 
+  function __emscripten_fetch_free(id) {
+      var xhr = Fetch.xhrs[id];
+      if (xhr) {
+          delete Fetch.xhrs[id];
+          // check if fetch is still in progress and should be aborted
+          if (xhr.readyState > 0 && xhr.readyState < 4) {
+              xhr.abort();
+          }
+      }
+  }
+
   function requireRegisteredType(rawType, humanName) {
       var impl = registeredTypes[rawType];
       if (undefined === impl) {
@@ -3165,6 +3176,10 @@ var ASM_CONSTS = {
       abort('native code called abort()');
     }
 
+  function _emscripten_is_main_browser_thread() {
+      return !ENVIRONMENT_IS_WORKER;
+    }
+
   function _emscripten_memcpy_big(dest, src, num) {
       HEAPU8.copyWithin(dest, src, src + num);
     }
@@ -3185,6 +3200,456 @@ var ASM_CONSTS = {
   function _emscripten_run_script(ptr) {
       eval(UTF8ToString(ptr));
     }
+
+  var Fetch = {xhrs:{},setu64:function(addr, val) {
+      HEAPU32[addr >> 2] = val;
+      HEAPU32[addr + 4 >> 2] = (val / 4294967296)|0;
+    },openDatabase:function(dbname, dbversion, onsuccess, onerror) {
+      try {
+        var openRequest = indexedDB.open(dbname, dbversion);
+      } catch (e) { return onerror(e); }
+  
+      openRequest.onupgradeneeded = (event) => {
+        var db = /** @type {IDBDatabase} */ (event.target.result);
+        if (db.objectStoreNames.contains('FILES')) {
+          db.deleteObjectStore('FILES');
+        }
+        db.createObjectStore('FILES');
+      };
+      openRequest.onsuccess = (event) => onsuccess(event.target.result);
+      openRequest.onerror = (error) => onerror(error);
+    },staticInit:function() {
+      var isMainThread = true;
+  
+      var onsuccess = (db) => {
+        Fetch.dbInstance = db;
+  
+        if (isMainThread) {
+          removeRunDependency('library_fetch_init');
+        }
+      };
+      var onerror = () => {
+        Fetch.dbInstance = false;
+  
+        if (isMainThread) {
+          removeRunDependency('library_fetch_init');
+        }
+      };
+      Fetch.openDatabase('emscripten_filesystem', 1, onsuccess, onerror);
+  
+      if (typeof ENVIRONMENT_IS_FETCH_WORKER == 'undefined' || !ENVIRONMENT_IS_FETCH_WORKER) addRunDependency('library_fetch_init');
+    }};
+  
+  function fetchXHR(fetch, onsuccess, onerror, onprogress, onreadystatechange) {
+    var url = HEAPU32[fetch + 8 >> 2];
+    if (!url) {
+      onerror(fetch, 0, 'no url specified!');
+      return;
+    }
+    var url_ = UTF8ToString(url);
+  
+    var fetch_attr = fetch + 112;
+    var requestMethod = UTF8ToString(fetch_attr);
+    if (!requestMethod) requestMethod = 'GET';
+    var userData = HEAPU32[fetch + 4 >> 2];
+    var fetchAttributes = HEAPU32[fetch_attr + 52 >> 2];
+    var timeoutMsecs = HEAPU32[fetch_attr + 56 >> 2];
+    var withCredentials = !!HEAPU32[fetch_attr + 60 >> 2];
+    var destinationPath = HEAPU32[fetch_attr + 64 >> 2];
+    var userName = HEAPU32[fetch_attr + 68 >> 2];
+    var password = HEAPU32[fetch_attr + 72 >> 2];
+    var requestHeaders = HEAPU32[fetch_attr + 76 >> 2];
+    var overriddenMimeType = HEAPU32[fetch_attr + 80 >> 2];
+    var dataPtr = HEAPU32[fetch_attr + 84 >> 2];
+    var dataLength = HEAPU32[fetch_attr + 88 >> 2];
+  
+    var fetchAttrLoadToMemory = !!(fetchAttributes & 1);
+    var fetchAttrStreamData = !!(fetchAttributes & 2);
+    var fetchAttrPersistFile = !!(fetchAttributes & 4);
+    var fetchAttrAppend = !!(fetchAttributes & 8);
+    var fetchAttrReplace = !!(fetchAttributes & 16);
+    var fetchAttrSynchronous = !!(fetchAttributes & 64);
+    var fetchAttrWaitable = !!(fetchAttributes & 128);
+  
+    var userNameStr = userName ? UTF8ToString(userName) : undefined;
+    var passwordStr = password ? UTF8ToString(password) : undefined;
+  
+    var xhr = new XMLHttpRequest();
+    xhr.withCredentials = withCredentials;
+    xhr.open(requestMethod, url_, !fetchAttrSynchronous, userNameStr, passwordStr);
+    if (!fetchAttrSynchronous) xhr.timeout = timeoutMsecs; // XHR timeout field is only accessible in async XHRs, and must be set after .open() but before .send().
+    xhr.url_ = url_; // Save the url for debugging purposes (and for comparing to the responseURL that server side advertised)
+    assert(!fetchAttrStreamData, 'streaming uses moz-chunked-arraybuffer which is no longer supported; TODO: rewrite using fetch()');
+    xhr.responseType = 'arraybuffer';
+  
+    if (overriddenMimeType) {
+      var overriddenMimeTypeStr = UTF8ToString(overriddenMimeType);
+      xhr.overrideMimeType(overriddenMimeTypeStr);
+    }
+    if (requestHeaders) {
+      for (;;) {
+        var key = HEAPU32[requestHeaders >> 2];
+        if (!key) break;
+        var value = HEAPU32[requestHeaders + 4 >> 2];
+        if (!value) break;
+        requestHeaders += 8;
+        var keyStr = UTF8ToString(key);
+        var valueStr = UTF8ToString(value);
+        xhr.setRequestHeader(keyStr, valueStr);
+      }
+    }
+    var id = HEAPU32[fetch + 0 >> 2];
+    Fetch.xhrs[id] = xhr;
+    var data = (dataPtr && dataLength) ? HEAPU8.slice(dataPtr, dataPtr + dataLength) : null;
+    // TODO: Support specifying custom headers to the request.
+  
+    // Share the code to save the response, as we need to do so both on success
+    // and on error (despite an error, there may be a response, like a 404 page).
+    // This receives a condition, which determines whether to save the xhr's
+    // response, or just 0.
+    function saveResponseAndStatus() {
+      var ptr = 0;
+      var ptrLen = 0;
+      if (xhr.response && fetchAttrLoadToMemory && HEAPU32[fetch + 12 >> 2] === 0) {
+        ptrLen = xhr.response.byteLength;
+      }
+      if (ptrLen > 0) {
+        // The data pointer malloc()ed here has the same lifetime as the emscripten_fetch_t structure itself has, and is
+        // freed when emscripten_fetch_close() is called.
+        ptr = _malloc(ptrLen);
+        HEAPU8.set(new Uint8Array(/** @type{Array<number>} */(xhr.response)), ptr);
+      }
+      HEAPU32[fetch + 12 >> 2] = ptr;
+      Fetch.setu64(fetch + 16, ptrLen);
+      Fetch.setu64(fetch + 24, 0);
+      var len = xhr.response ? xhr.response.byteLength : 0;
+      if (len) {
+        // If the final XHR.onload handler receives the bytedata to compute total length, report that,
+        // otherwise don't write anything out here, which will retain the latest byte size reported in
+        // the most recent XHR.onprogress handler.
+        Fetch.setu64(fetch + 32, len);
+      }
+      HEAPU16[fetch + 40 >> 1] = xhr.readyState;
+      HEAPU16[fetch + 42 >> 1] = xhr.status;
+      if (xhr.statusText) stringToUTF8(xhr.statusText, fetch + 44, 64);
+    }
+  
+    xhr.onload = (e) => {
+      // check if xhr was aborted by user and don't try to call back
+      if (!(id in Fetch.xhrs)) { 
+        return;
+      }
+      saveResponseAndStatus();
+      if (xhr.status >= 200 && xhr.status < 300) {
+        if (onsuccess) onsuccess(fetch, xhr, e);
+      } else {
+        if (onerror) onerror(fetch, xhr, e);
+      }
+    };
+    xhr.onerror = (e) => {
+      // check if xhr was aborted by user and don't try to call back
+      if (!(id in Fetch.xhrs)) { 
+        return;
+      }
+      saveResponseAndStatus();
+      if (onerror) onerror(fetch, xhr, e);
+    };
+    xhr.ontimeout = (e) => {
+      // check if xhr was aborted by user and don't try to call back
+      if (!(id in Fetch.xhrs)) { 
+        return;
+      }
+      if (onerror) onerror(fetch, xhr, e);
+    };
+    xhr.onprogress = (e) => {
+      // check if xhr was aborted by user and don't try to call back
+      if (!(id in Fetch.xhrs)) { 
+        return;
+      }
+      var ptrLen = (fetchAttrLoadToMemory && fetchAttrStreamData && xhr.response) ? xhr.response.byteLength : 0;
+      var ptr = 0;
+      if (ptrLen > 0 && fetchAttrLoadToMemory && fetchAttrStreamData) {
+        assert(onprogress, 'When doing a streaming fetch, you should have an onprogress handler registered to receive the chunks!');
+        // Allocate byte data in Emscripten heap for the streamed memory block (freed immediately after onprogress call)
+        ptr = _malloc(ptrLen);
+        HEAPU8.set(new Uint8Array(/** @type{Array<number>} */(xhr.response)), ptr);
+      }
+      HEAPU32[fetch + 12 >> 2] = ptr;
+      Fetch.setu64(fetch + 16, ptrLen);
+      Fetch.setu64(fetch + 24, e.loaded - ptrLen);
+      Fetch.setu64(fetch + 32, e.total);
+      HEAPU16[fetch + 40 >> 1] = xhr.readyState;
+      // If loading files from a source that does not give HTTP status code, assume success if we get data bytes
+      if (xhr.readyState >= 3 && xhr.status === 0 && e.loaded > 0) xhr.status = 200;
+      HEAPU16[fetch + 42 >> 1] = xhr.status;
+      if (xhr.statusText) stringToUTF8(xhr.statusText, fetch + 44, 64);
+      if (onprogress) onprogress(fetch, xhr, e);
+      if (ptr) {
+        _free(ptr);
+      }
+    };
+    xhr.onreadystatechange = (e) => {
+      // check if xhr was aborted by user and don't try to call back
+      if (!(id in Fetch.xhrs)) {
+        
+        return;
+      }
+      HEAPU16[fetch + 40 >> 1] = xhr.readyState;
+      if (xhr.readyState >= 2) {
+        HEAPU16[fetch + 42 >> 1] = xhr.status;
+      }
+      if (onreadystatechange) onreadystatechange(fetch, xhr, e);
+    };
+    try {
+      xhr.send(data);
+    } catch(e) {
+      if (onerror) onerror(fetch, xhr, e);
+    }
+  }
+  
+  function handleException(e) {
+      // Certain exception types we do not treat as errors since they are used for
+      // internal control flow.
+      // 1. ExitStatus, which is thrown by exit()
+      // 2. "unwind", which is thrown by emscripten_unwind_to_js_event_loop() and others
+      //    that wish to return to JS event loop.
+      if (e instanceof ExitStatus || e == 'unwind') {
+        return EXITSTATUS;
+      }
+      quit_(1, e);
+    }
+  function callUserCallback(func) {
+      if (ABORT) {
+        err('user callback triggered after runtime exited or application aborted.  Ignoring.');
+        return;
+      }
+      try {
+        func();
+      } catch (e) {
+        handleException(e);
+      }
+    }
+  
+  function fetchCacheData(/** @type {IDBDatabase} */ db, fetch, data, onsuccess, onerror) {
+    if (!db) {
+      onerror(fetch, 0, 'IndexedDB not available!');
+      return;
+    }
+  
+    var fetch_attr = fetch + 112;
+    var destinationPath = HEAPU32[fetch_attr + 64 >> 2];
+    if (!destinationPath) destinationPath = HEAPU32[fetch + 8 >> 2];
+    var destinationPathStr = UTF8ToString(destinationPath);
+  
+    try {
+      var transaction = db.transaction(['FILES'], 'readwrite');
+      var packages = transaction.objectStore('FILES');
+      var putRequest = packages.put(data, destinationPathStr);
+      putRequest.onsuccess = (event) => {
+        HEAPU16[fetch + 40 >> 1] = 4; // Mimic XHR readyState 4 === 'DONE: The operation is complete'
+        HEAPU16[fetch + 42 >> 1] = 200; // Mimic XHR HTTP status code 200 "OK"
+        stringToUTF8("OK", fetch + 44, 64);
+        onsuccess(fetch, 0, destinationPathStr);
+      };
+      putRequest.onerror = (error) => {
+        // Most likely we got an error if IndexedDB is unwilling to store any more data for this page.
+        // TODO: Can we identify and break down different IndexedDB-provided errors and convert those
+        // to more HTTP status codes for more information?
+        HEAPU16[fetch + 40 >> 1] = 4; // Mimic XHR readyState 4 === 'DONE: The operation is complete'
+        HEAPU16[fetch + 42 >> 1] = 413; // Mimic XHR HTTP status code 413 "Payload Too Large"
+        stringToUTF8("Payload Too Large", fetch + 44, 64);
+        onerror(fetch, 0, error);
+      };
+    } catch(e) {
+      onerror(fetch, 0, e);
+    }
+  }
+  
+  function fetchLoadCachedData(db, fetch, onsuccess, onerror) {
+    if (!db) {
+      onerror(fetch, 0, 'IndexedDB not available!');
+      return;
+    }
+  
+    var fetch_attr = fetch + 112;
+    var path = HEAPU32[fetch_attr + 64 >> 2];
+    if (!path) path = HEAPU32[fetch + 8 >> 2];
+    var pathStr = UTF8ToString(path);
+  
+    try {
+      var transaction = db.transaction(['FILES'], 'readonly');
+      var packages = transaction.objectStore('FILES');
+      var getRequest = packages.get(pathStr);
+      getRequest.onsuccess = (event) => {
+        if (event.target.result) {
+          var value = event.target.result;
+          var len = value.byteLength || value.length;
+          // The data pointer malloc()ed here has the same lifetime as the emscripten_fetch_t structure itself has, and is
+          // freed when emscripten_fetch_close() is called.
+          var ptr = _malloc(len);
+          HEAPU8.set(new Uint8Array(value), ptr);
+          HEAPU32[fetch + 12 >> 2] = ptr;
+          Fetch.setu64(fetch + 16, len);
+          Fetch.setu64(fetch + 24, 0);
+          Fetch.setu64(fetch + 32, len);
+          HEAPU16[fetch + 40 >> 1] = 4; // Mimic XHR readyState 4 === 'DONE: The operation is complete'
+          HEAPU16[fetch + 42 >> 1] = 200; // Mimic XHR HTTP status code 200 "OK"
+          stringToUTF8("OK", fetch + 44, 64);
+          onsuccess(fetch, 0, value);
+        } else {
+          // Succeeded to load, but the load came back with the value of undefined, treat that as an error since we never store undefined in db.
+          HEAPU16[fetch + 40 >> 1] = 4; // Mimic XHR readyState 4 === 'DONE: The operation is complete'
+          HEAPU16[fetch + 42 >> 1] = 404; // Mimic XHR HTTP status code 404 "Not Found"
+          stringToUTF8("Not Found", fetch + 44, 64);
+          onerror(fetch, 0, 'no data');
+        }
+      };
+      getRequest.onerror = (error) => {
+        HEAPU16[fetch + 40 >> 1] = 4; // Mimic XHR readyState 4 === 'DONE: The operation is complete'
+        HEAPU16[fetch + 42 >> 1] = 404; // Mimic XHR HTTP status code 404 "Not Found"
+        stringToUTF8("Not Found", fetch + 44, 64);
+        onerror(fetch, 0, error);
+      };
+    } catch(e) {
+      onerror(fetch, 0, e);
+    }
+  }
+  
+  function fetchDeleteCachedData(db, fetch, onsuccess, onerror) {
+    if (!db) {
+      onerror(fetch, 0, 'IndexedDB not available!');
+      return;
+    }
+  
+    var fetch_attr = fetch + 112;
+    var path = HEAPU32[fetch_attr + 64 >> 2];
+    if (!path) path = HEAPU32[fetch + 8 >> 2];
+    var pathStr = UTF8ToString(path);
+  
+    try {
+      var transaction = db.transaction(['FILES'], 'readwrite');
+      var packages = transaction.objectStore('FILES');
+      var request = packages.delete(pathStr);
+      request.onsuccess = (event) => {
+        var value = event.target.result;
+        HEAPU32[fetch + 12 >> 2] = 0;
+        Fetch.setu64(fetch + 16, 0);
+        Fetch.setu64(fetch + 24, 0);
+        Fetch.setu64(fetch + 32, 0);
+        HEAPU16[fetch + 40 >> 1] = 4; // Mimic XHR readyState 4 === 'DONE: The operation is complete'
+        HEAPU16[fetch + 42 >> 1] = 200; // Mimic XHR HTTP status code 200 "OK"
+        stringToUTF8("OK", fetch + 44, 64);
+        onsuccess(fetch, 0, value);
+      };
+      request.onerror = (error) => {
+        HEAPU16[fetch + 40 >> 1] = 4; // Mimic XHR readyState 4 === 'DONE: The operation is complete'
+        HEAPU16[fetch + 42 >> 1] = 404; // Mimic XHR HTTP status code 404 "Not Found"
+        stringToUTF8("Not Found", fetch + 44, 64);
+        onerror(fetch, 0, error);
+      };
+    } catch(e) {
+      onerror(fetch, 0, e);
+    }
+  }
+  function _emscripten_start_fetch(fetch, successcb, errorcb, progresscb, readystatechangecb) {
+    // Avoid shutting down the runtime since we want to wait for the async
+    // response.
+    
+  
+    var fetch_attr = fetch + 112;
+    var requestMethod = UTF8ToString(fetch_attr);
+    var onsuccess = HEAPU32[fetch_attr + 36 >> 2];
+    var onerror = HEAPU32[fetch_attr + 40 >> 2];
+    var onprogress = HEAPU32[fetch_attr + 44 >> 2];
+    var onreadystatechange = HEAPU32[fetch_attr + 48 >> 2];
+    var fetchAttributes = HEAPU32[fetch_attr + 52 >> 2];
+    var fetchAttrLoadToMemory = !!(fetchAttributes & 1);
+    var fetchAttrStreamData = !!(fetchAttributes & 2);
+    var fetchAttrPersistFile = !!(fetchAttributes & 4);
+    var fetchAttrNoDownload = !!(fetchAttributes & 32);
+    var fetchAttrAppend = !!(fetchAttributes & 8);
+    var fetchAttrReplace = !!(fetchAttributes & 16);
+    var fetchAttrSynchronous = !!(fetchAttributes & 64);
+  
+    function doCallback(f) {
+      if (fetchAttrSynchronous) {
+        f();
+      } else {
+        callUserCallback(f);
+      }
+    }
+  
+    var reportSuccess = (fetch, xhr, e) => {
+      
+      doCallback(() => {
+        if (onsuccess) getWasmTableEntry(onsuccess)(fetch);
+        else if (successcb) successcb(fetch);
+      });
+    };
+  
+    var reportProgress = (fetch, xhr, e) => {
+      doCallback(() => {
+        if (onprogress) getWasmTableEntry(onprogress)(fetch);
+        else if (progresscb) progresscb(fetch);
+      });
+    };
+  
+    var reportError = (fetch, xhr, e) => {
+      
+      doCallback(() => {
+        if (onerror) getWasmTableEntry(onerror)(fetch);
+        else if (errorcb) errorcb(fetch);
+      });
+    };
+  
+    var reportReadyStateChange = (fetch, xhr, e) => {
+      doCallback(() => {
+        if (onreadystatechange) getWasmTableEntry(onreadystatechange)(fetch);
+        else if (readystatechangecb) readystatechangecb(fetch);
+      });
+    };
+  
+    var performUncachedXhr = (fetch, xhr, e) => {
+      fetchXHR(fetch, reportSuccess, reportError, reportProgress, reportReadyStateChange);
+    };
+  
+    var cacheResultAndReportSuccess = (fetch, xhr, e) => {
+      var storeSuccess = (fetch, xhr, e) => {
+        
+        doCallback(() => {
+          if (onsuccess) getWasmTableEntry(onsuccess)(fetch);
+          else if (successcb) successcb(fetch);
+        });
+      };
+      var storeError = (fetch, xhr, e) => {
+        
+        doCallback(() => {
+          if (onsuccess) getWasmTableEntry(onsuccess)(fetch);
+          else if (successcb) successcb(fetch);
+        });
+      };
+      fetchCacheData(Fetch.dbInstance, fetch, xhr.response, storeSuccess, storeError);
+    };
+  
+    var performCachedXhr = (fetch, xhr, e) => {
+      fetchXHR(fetch, cacheResultAndReportSuccess, reportError, reportProgress, reportReadyStateChange);
+    };
+  
+    if (requestMethod === 'EM_IDB_STORE') {
+      // TODO(?): Here we perform a clone of the data, because storing shared typed arrays to IndexedDB does not seem to be allowed.
+      var ptr = HEAPU32[fetch_attr + 84 >> 2];
+      fetchCacheData(Fetch.dbInstance, fetch, HEAPU8.slice(ptr, ptr + HEAPU32[fetch_attr + 88 >> 2]), reportSuccess, reportError);
+    } else if (requestMethod === 'EM_IDB_DELETE') {
+      fetchDeleteCachedData(Fetch.dbInstance, fetch, reportSuccess, reportError);
+    } else if (!fetchAttrReplace) {
+      fetchLoadCachedData(Fetch.dbInstance, fetch, reportSuccess, fetchAttrNoDownload ? reportError : (fetchAttrPersistFile ? performCachedXhr : performUncachedXhr));
+    } else if (!fetchAttrNoDownload) {
+      fetchXHR(fetch, fetchAttrPersistFile ? cacheResultAndReportSuccess : reportSuccess, reportError, reportProgress, reportReadyStateChange);
+    } else {
+      return 0; // todo: free
+    }
+    return fetch;
+  }
 
   var SYSCALLS = {varargs:undefined,get:function() {
         assert(SYSCALLS.varargs != undefined);
@@ -3248,6 +3713,7 @@ init_embind();;
 init_RegisteredPointer();
 UnboundTypeError = Module['UnboundTypeError'] = extendError(Error, 'UnboundTypeError');;
 init_emval();;
+Fetch.staticInit();;
 var ASSERTIONS = true;
 
 function checkIncomingModuleAPI() {
@@ -3267,6 +3733,7 @@ var asmLibraryArg = {
   "_embind_register_std_string": __embind_register_std_string,
   "_embind_register_std_wstring": __embind_register_std_wstring,
   "_embind_register_void": __embind_register_void,
+  "_emscripten_fetch_free": __emscripten_fetch_free,
   "_emval_as": __emval_as,
   "_emval_call_method": __emval_call_method,
   "_emval_decref": __emval_decref,
@@ -3278,9 +3745,11 @@ var asmLibraryArg = {
   "_emval_set_property": __emval_set_property,
   "_emval_take_value": __emval_take_value,
   "abort": _abort,
+  "emscripten_is_main_browser_thread": _emscripten_is_main_browser_thread,
   "emscripten_memcpy_big": _emscripten_memcpy_big,
   "emscripten_resize_heap": _emscripten_resize_heap,
   "emscripten_run_script": _emscripten_run_script,
+  "emscripten_start_fetch": _emscripten_start_fetch,
   "fd_close": _fd_close,
   "fd_seek": _fd_seek,
   "fd_write": _fd_write
@@ -3293,6 +3762,9 @@ var ___wasm_call_ctors = Module["___wasm_call_ctors"] = createExportWrapper("__w
 var _malloc = Module["_malloc"] = createExportWrapper("malloc");
 
 /** @type {function(...*):?} */
+var _free = Module["_free"] = createExportWrapper("free");
+
+/** @type {function(...*):?} */
 var ___getTypeName = Module["___getTypeName"] = createExportWrapper("__getTypeName");
 
 /** @type {function(...*):?} */
@@ -3303,9 +3775,6 @@ var ___errno_location = Module["___errno_location"] = createExportWrapper("__err
 
 /** @type {function(...*):?} */
 var _fflush = Module["_fflush"] = createExportWrapper("fflush");
-
-/** @type {function(...*):?} */
-var _free = Module["_free"] = createExportWrapper("free");
 
 /** @type {function(...*):?} */
 var _emscripten_stack_init = Module["_emscripten_stack_init"] = function() {
@@ -3589,6 +4058,11 @@ var unexportedRuntimeSymbols = [
   'ALLOC_NORMAL',
   'ALLOC_STACK',
   'allocate',
+  'Fetch',
+  'fetchDeleteCachedData',
+  'fetchLoadCachedData',
+  'fetchCacheData',
+  'fetchXHR',
   'InternalError',
   'BindingError',
   'UnboundTypeError',
@@ -3711,10 +4185,8 @@ var missingLibrarySymbols = [
   'getExecutableName',
   'listenOnce',
   'autoResumeAudioContext',
-  'handleException',
   'runtimeKeepalivePush',
   'runtimeKeepalivePop',
-  'callUserCallback',
   'maybeExit',
   'safeSetTimeout',
   'asmjsMangle',
