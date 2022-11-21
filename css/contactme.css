@@ -1,0 +1,22 @@
+* 
+{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body 
+{
+    background-color: #bababa;
+    min-width: min-content;
+}
+
+#contactme-wrapper
+{
+    position: fixed;
+    top: 16vh;
+    left: 16vh;
+    background-color: ghostwhite;
+    padding: 20px;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}

@@ -1,33 +1,38 @@
 #ifndef WEBSITE_STR_MOD_HPP
 #define WEBSITE_STR_MOD_HPP
 
-#include <string>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 #include <emscripten/emscripten.h>
 #include <emscripten/fetch.h>
-#include <fstream>
-//#include <boost/filesystem.hpp>
+#include <emscripten.h>
+#include <nlohmann/json.hpp>
+#include <map>
+#include <string_view>
+#include <string>
 
+using json = nlohmann::json;
 using namespace emscripten;
 
 class String_Modifier
 {
+        std::map<std::string, std::string> API_urls 
+        {
+            {"cat-image-url", "https://api.thecatapi.com/v1/images/search"},
+            {"cat-fact-url", "https://catfact.ninja/fact"},
+            {"dog-image-url", "https://dog.ceo/api/breeds/image/random"},
+            {"dog-fact-url", "https://dog-api.kinduff.com/api/facts"}
+        };
+        static void ON_SUCCESS(emscripten_fetch_t * fetch);
+        static void ON_ERROR(emscripten_fetch_t * fetch);
+
+
     public:
         String_Modifier() = default;
         ~String_Modifier() = default;
 
-        void when_input_changes();
         void change_theme_emoji();
-        size_t _get_sizeof() const { return _class_size; }
         void _get_image();
-        std::string get_temp_holder();
-        static std::string _temp_holder;
-    private:
-        const size_t _class_size { sizeof(String_Modifier) };
-        static void _F_ON_SUCCESS(struct emscripten_fetch_t * fetch);
-        void _F_ON_ERROR();
-        
 };
 
 #endif // WEBSITE_STR_MOD_HPP

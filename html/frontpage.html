@@ -4,16 +4,30 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Text Editing</title>
+    <title>Random Images</title>
     <link rel="stylesheet" href="../css/frontpage.css">
     <link rel="stylesheet" href="../css/mainmenu.css">
     <link rel="icon" href="../images/icon.png">
 </head>
 <body onbeforeunload="String_Modifier_OBJ.delete();">
+
+    <!-- this website didn't go after my plans and I didn't get it fully done 
+        as I implemented too many ideas at once and couldn't make them done -->
+
     <!-- Menubar -->
     <header include-html="mainmenu.html" id="mainmenu-space"></header>
 
-    <img src="" href="" alt="" id="text">
+    <!-- where the image button and facts will be placed -->
+    <div id="image-container">
+        <img width="500" height="400" src="../images/cn8.gif" alt="" id="url-holder">
+        <button onclick="String_Modifier_OBJ._get_image()">Get something random!</button>
+        <input type="checkbox" name="Cat" id="cat-checkbox">
+        <label for="cat">cat</label>
+        <input type="checkbox" name="Dog" id="dog-checkbox">
+        <label for="dog">dog</label>
+        <p id="cat-fact-holder">Did you know cats are cute?</p>
+    </div>
+
     <!-- Footer -->
     <footer>
          <!-- Dark theme / White theme button and made by me text-->

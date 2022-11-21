@@ -37,10 +37,36 @@ footer
     margin-bottom: 5px;
     border: none;
     border-radius: 50px;
-    cursor: pointer;
+    cursor: poiter;
     transition: all 0.3s ease 0s;
 }
 
-img {
-    display: block;
+#image-container
+{
+    max-width: 500px;
+    height: 500px;
+    position: fixed;
+    left: 45vh;
+    background-color: aliceblue;
+    object-fit: cover;
+    border-radius: 10%;
+}
+
+#image-container button
+{
+    padding: 5px;
+    background-color: black;
+    color: ghostwhite;
+    border-radius: 10%;
+    cursor: pointer;
+    border: none;
+    margin-left: 10px;
+    font-family: Diet-Again;
+}
+
+#image-container p
+{
+    font-size: 11px;
+    font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    padding: 5px;
 }
