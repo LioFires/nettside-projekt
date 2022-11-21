@@ -1,5 +1,4 @@
 # Website for school
-## It's far from done!
 
 ### This is not something you can just lanch as a file. You need a server. I use liveserver in vscode.
 
